@@ -2,7 +2,7 @@ const router = require('express').Router();
 const bcrypt = require('bcrypt');
 const { registerValidation, loginValidation} = require("../validation");
 const User = require('../models/user');
-
+const jwt = require('jsonwebtoken');
 
 // /register
 router.post("/register", async(req, res) => {
@@ -13,7 +13,8 @@ router.post("/register", async(req, res) => {
         // const error = registerValidation(req.body).error
 
         if (error) {
-            res.status(400).send({
+            // early return berfungsi untuk memastikan eksekusi respons sekali saja, karena dikeluarkan dengan return
+            return res.status(400).send({
                 error: error.details[0].message
             })
         }
@@ -24,7 +25,7 @@ router.post("/register", async(req, res) => {
         const emailExist = await User.findOne({ email: req.body.email});
 
         if (emailExist){
-            res.status(400).json({ error: "Email already exist"})
+            return res.status(400).json({ error: "Email already exist"})
         }
 
         // hash the password
@@ -43,10 +44,10 @@ router.post("/register", async(req, res) => {
         try {
             
             const savedUser = await userObject.save();
-            res.json({ error: null, data: savedUser._id})
+            return res.json({ error: null, data: savedUser._id})
 
         } catch (error) {
-            res.status(400).json({ error: error})
+            return res.status(400).json({ error: error})
         }
 
 })
@@ -57,7 +58,7 @@ router.post("/login", async(req, res) => {
     const { error } = loginValidation(req.body)
 
     if (error) {
-        res.status(400).json({
+        return res.status(400).json({
             error: error
         })
     }
@@ -67,7 +68,7 @@ router.post("/login", async(req, res) => {
 
     // throw error if email does not exist
     if (!user) {
-        res.status(400).json({ error: "User with email " + req.body.email + " is not found"})
+        return res.status(400).json({ error: "User with email " + req.body.email + " is not found"})
     }
 
     // check password is true or not
@@ -75,12 +76,33 @@ router.post("/login", async(req, res) => {
     const validPassword = await bcrypt.compare(req.body.password, user.password)
 
     if (!validPassword) {
-        res.status(400).json({ error: "Password is not valid"})
+        return res.status(400).json({ error: "Password is not valid"})
     }
 
     // create authentication token
 
+    const token = jwt.sign(
+        // payload
+        {
+            name: user.name,
+            id: user._id
+        },
+        // TOKEN_SECRET
+        process.env.TOKEN_SECRET,
+
+        // EXPIRATION TIME
+        {
+            expiresIn: process.env.JWT_EXPIRES_IN
+        },
+    );
+
     // attach auth token to header
+    return res.header("auth-token", token).json(
+        {
+            error: null,
+            data: { token }
+        });
+
 })
 
 module.exports = router

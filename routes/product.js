@@ -1,10 +1,12 @@
 const router = require("express").Router();
 const product = require("../models/product");
+const { verifyToken } = require("../validation");
+// verifyTOken also can be implemented for all product routes at once, if we implemented in server.js (similar way to use it)
 
 // CRUD Operation
 
 // create product (/api/products/)
-router.post("/", (req, res) => {
+router.post("/", verifyToken, (req, res) => {
 
     const data = req.body
 

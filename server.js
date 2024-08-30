@@ -4,6 +4,14 @@ const bodyParser = require('body-parser');
 const product = require('./models/product');
 const app = express();
 
+// swagger dependens
+const swaggerUi = require('swagger-ui-express');
+const yaml = require('yamljs')
+
+// setup swager
+const swaggerDefinition = yaml.load('docs/swagger.yaml');
+app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerDefinition));
+
 // import routes
 const productRoutes = require('./routes/product');
 const authRoutes = require('./routes/auth');
