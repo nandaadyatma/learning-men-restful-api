@@ -9,7 +9,7 @@ const swaggerUi = require('swagger-ui-express');
 const yaml = require('yamljs')
 
 // setup swager
-const swaggerDefinition = yaml.load('docs/swagger.yaml');
+const swaggerDefinition = yaml.load('./docs/swagger.yaml');
 app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerDefinition));
 
 // import routes
